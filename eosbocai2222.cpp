@@ -51,6 +51,8 @@ void eosbocai2222::transfer(const account_name &from,
     }
     if ("buy token" == memo)
     {
+        eostime buyTokenStartat = 1540818000; //2018-10-29 21:00:00
+        eosio_assert(now() > buyTokenStartat, "start at utc+8 2018-10-29 21:00:00");
         buytoken(from, quantity);
         return;
     }
@@ -58,6 +60,8 @@ void eosbocai2222::transfer(const account_name &from,
     {
         return;
     }
+    eostime playDiceStartat = 1540904400; //2018-10-30 21:00:00
+    eosio_assert(now() > playDiceStartat, "start at utc+8 2018-10-30 21:00:00");
     uint8_t roll_under;
     account_name referrer;
     parse_memo(memo, &roll_under, &referrer);
