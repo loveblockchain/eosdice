@@ -8,6 +8,8 @@
 #define PRIZEPOOL N(eosbocai1111)
 #define DICESUPPLY 88000000000000
 
+typedef uint32_t eostime;
+
 // @abi table bets i64
 struct st_bet
 {
