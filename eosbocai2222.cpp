@@ -65,6 +65,7 @@ void eosbocai2222::transfer(const account_name &from,
     uint8_t roll_under;
     account_name referrer;
     parse_memo(memo, &roll_under, &referrer);
+    eosio_assert(is_account(referrer), "referrer account does not exist");
 
     // //check quantity
     assert_quantity(quantity);
