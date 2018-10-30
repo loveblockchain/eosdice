@@ -77,7 +77,7 @@ class eosbocai2222 : public contract
         memo.append(" player: ");
         string player = name{bet.player}.to_string();
         memo.append(player);
-        memo.append(" referral reward!");
+        memo.append(" referral reward! eosdice.vip");
         return memo;
     }
 
@@ -89,7 +89,7 @@ class eosbocai2222 : public contract
         memo.append(" player: ");
         string player = name{bet.player}.to_string();
         memo.append(player);
-        memo.append(" winner!");
+        memo.append(" winner! eosdice.vip");
         return memo;
     }
 
@@ -225,7 +225,7 @@ class eosbocai2222 : public contract
         action(permission_level{_self, N(active)},
                DICETOKEN,
                N(transfer),
-               std::make_tuple(_self, from, asset(quantity.amount * 10000, DICE_SYMBOL), std::string("thanks")))
+               std::make_tuple(_self, from, asset(quantity.amount * 10000, DICE_SYMBOL), std::string("thanks! eosdice.vip")))
             .send();
     }
     void vipcheck(account_name from, asset quantity)
