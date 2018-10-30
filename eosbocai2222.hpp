@@ -57,9 +57,9 @@ class eosbocai2222 : public contract
         }
     }
 
-    asset compute_referrer_reward(const st_bet &bet) { return bet.amount * 2 / 1000; } //0.2% for ref
-    asset compute_dev_reward(const st_bet &bet) { return bet.amount * 8 / 1000; }      // 0.08% for dev
-    asset compute_pool_reward(const st_bet &bet) { return bet.amount * 10 / 1000; }    // 0.1% for pool
+    asset compute_referrer_reward(const st_bet &bet) { return bet.amount * 151 / 100000; } //10% for ref
+    asset compute_dev_reward(const st_bet &bet) { return bet.amount * 302 / 100000; }      // 20% for dev
+    asset compute_pool_reward(const st_bet &bet) { return bet.amount * 1057 / 100000; }    // 70% for pool
 
     uint64_t next_id()
     {
@@ -130,7 +130,7 @@ class eosbocai2222 : public contract
     }
     asset max_payout(const uint8_t &roll_under, const asset &offer)
     {
-        const double ODDS = 98.0 / ((double)roll_under - 1.0);
+        const double ODDS = 98.5 / ((double)roll_under - 1.0);
         return asset(ODDS * offer.amount, offer.symbol);
     }
 
@@ -187,7 +187,7 @@ class eosbocai2222 : public contract
         st_global global = _global.get_or_default();
         auto supply = getDiceSupply();
         auto nexthalve = global.nexthalve;
-        if ((DICESUPPLY - supply) <= nexthalve) 
+        if ((DICESUPPLY - supply) <= nexthalve) // 可以减半了.
         {
             global.nexthalve = global.nexthalve * 8 / 10;
             global.eosperdice = global.eosperdice * 5 / 10;
