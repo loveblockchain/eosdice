@@ -89,7 +89,7 @@ void eosbocai2222::transfer(const account_name &from,
                       .created_at = now()};
 
     lock(quantity);
-    issue_token(from, quantity, "mining");
+    issue_token(from, quantity, "mining! eosdice.vip");
     send_defer_action(permission_level{_self, N(active)},
                       N(eosio.token),
                       N(transfer),
