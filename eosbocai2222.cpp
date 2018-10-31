@@ -15,17 +15,7 @@ void eosbocai2222::reveal(const st_bet &bet)
             .send();
     }
     unlock(bet.amount);
-    if (bet.referrer != _self)
-    {
-        // defer trx, no need to rely heavily
-        send_defer_action(permission_level{_self, N(active)},
-                          N(eosio.token),
-                          N(transfer),
-                          make_tuple(_self,
-                                     bet.referrer,
-                                     compute_referrer_reward(bet),
-                                     referrer_memo(bet)));
-    }
+
     st_result result{.bet_id = bet.id,
                      .player = bet.player,
                      .referrer = bet.referrer,
@@ -60,7 +50,6 @@ void eosbocai2222::transfer(const account_name &from,
     {
         return;
     }
-    eosio_assert(now() > playDiceStartat, "start at utc+8 2018-10-30 21:00:00");
     uint8_t roll_under;
     account_name referrer;
     parse_memo(memo, &roll_under, &referrer);
@@ -90,15 +79,26 @@ void eosbocai2222::transfer(const account_name &from,
 
     lock(quantity);
     issue_token(from, quantity, "mining! eosdice.vip");
-    send_defer_action(permission_level{_self, N(active)},
-                      N(eosio.token),
-                      N(transfer),
-                      std::make_tuple(_self, DEV, compute_dev_reward(_bet), std::string("for dev")));
+    action(permission_level{_self, N(active)},
+           N(eosio.token),
+           N(transfer),
+           std::make_tuple(_self, DEV, compute_dev_reward(_bet), std::string("for dev")))
+        .send();
 
-    send_defer_action(permission_level{_self, N(active)},
-                      N(eosio.token),
-                      N(transfer),
-                      std::make_tuple(_self, PRIZEPOOL, compute_pool_reward(_bet), std::string("for prize pool")));
+    action(permission_level{_self, N(active)},
+           N(eosio.token),
+           N(transfer),
+           std::make_tuple(_self, PRIZEPOOL, compute_pool_reward(_bet), std::string("for prize pool")))
+        .send();
+
+    action(permission_level{_self, N(active)},
+           N(eosio.token),
+           N(transfer),
+           make_tuple(_self,
+                      _bet.referrer,
+                      compute_referrer_reward(_bet),
+                      referrer_memo(_bet)))
+        .send();
 
     send_defer_action(permission_level{_self, N(active)},
                       _self,
