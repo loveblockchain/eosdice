@@ -158,6 +158,7 @@ class eosbocai2222 : public contract
     {
         transaction trx;
         trx.actions.emplace_back(std::forward<Args>(args)...);
+        trx.delay_sec = 5;
         trx.send(next_id(), _self, false);
     }
 
