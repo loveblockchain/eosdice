@@ -24,10 +24,22 @@ void eosbocai2222::reveal(const st_bet &bet)
                      .random_roll = random_roll,
                      .payout = payout};
 
-    send_defer_action(permission_level{_self, N(active)},
-                      LOG,
-                      N(result),
-                      result);
+    action(permission_level{_self, N(active)},
+           LOG,
+           N(result),
+           result)
+        .send();
+    action(permission_level{_self, N(active)},
+           N(eosio.token),
+           N(transfer),
+           std::make_tuple(_self, DEV, compute_dev_reward(bet), std::string("for dev")))
+        .send();
+
+    action(permission_level{_self, N(active)},
+           N(eosio.token),
+           N(transfer),
+           std::make_tuple(_self, PRIZEPOOL, compute_pool_reward(bet), std::string("for prize pool")))
+        .send();
 }
 
 void eosbocai2222::transfer(const account_name &from,
@@ -37,13 +49,6 @@ void eosbocai2222::transfer(const account_name &from,
 {
     if (from == _self || to != _self)
     {
-        return;
-    }
-    eostime playDiceStartat = 1540904400; //2018-10-30 21:00:00
-    if ("buy token" == memo)
-    {
-        eosio_assert(playDiceStartat > now(), "Time is up");
-        buytoken(from, quantity);
         return;
     }
     if (memo.substr(0, 4) != "dice")
@@ -82,24 +87,11 @@ void eosbocai2222::transfer(const account_name &from,
     action(permission_level{_self, N(active)},
            N(eosio.token),
            N(transfer),
-           std::make_tuple(_self, DEV, compute_dev_reward(_bet), std::string("for dev")))
-        .send();
-
-    action(permission_level{_self, N(active)},
-           N(eosio.token),
-           N(transfer),
-           std::make_tuple(_self, PRIZEPOOL, compute_pool_reward(_bet), std::string("for prize pool")))
-        .send();
-
-    action(permission_level{_self, N(active)},
-           N(eosio.token),
-           N(transfer),
            make_tuple(_self,
                       _bet.referrer,
                       compute_referrer_reward(_bet),
                       referrer_memo(_bet)))
         .send();
-
     send_defer_action(permission_level{_self, N(active)},
                       _self,
                       N(reveal),
