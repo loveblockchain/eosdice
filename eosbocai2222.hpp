@@ -38,11 +38,12 @@ class eosbocai2222 : public contract
                    memo.end());
 
         size_t sep_count = std::count(memo.begin(), memo.end(), '-');
-        eosio_assert(sep_count == 2, "invalid memo");
+        eosio_assert(sep_count == 3, "invalid memo");
 
         size_t pos;
         string container;
         pos = sub2sep(memo, &container, '-', 0, true);
+        pos = sub2sep(memo, &container, '-', ++pos, true);
         pos = sub2sep(memo, &container, '-', ++pos, true);
         eosio_assert(!container.empty(), "no roll under");
         *roll_under = stoi(container);
@@ -190,8 +191,8 @@ class eosbocai2222 : public contract
         auto nexthalve = global.nexthalve;
         if ((DICESUPPLY - supply) <= nexthalve) // 可以减半了.
         {
-            global.nexthalve = global.nexthalve * 8 / 10;
-            global.eosperdice = global.eosperdice * 5 / 10;
+            global.nexthalve = global.nexthalve * 95 / 100;
+            global.eosperdice = global.eosperdice * 3 / 4;
             _global.set(global, _self);
         }
 
