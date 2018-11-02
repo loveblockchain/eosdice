@@ -107,7 +107,7 @@ void eosbocai2222::init()
     eosio_assert(global.initStatu != 1, "init ok");
 
     global.current_id += 1;
-    global.nexthalve = 6336000000 * 1e4;
+    global.nexthalve = 7524000000 * 1e4;
     global.eosperdice = 100;
     global.initStatu = 1;
     _global.set(global, _self);
