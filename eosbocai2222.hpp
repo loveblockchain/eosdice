@@ -17,6 +17,8 @@ class eosbocai2222 : public contract
 
     // @abi action
     void reveal(const st_bet &bet);
+    // @abi action
+    void reveal1(const st_bet &bet);
 
     // @abi action
     void init();
@@ -135,7 +137,7 @@ class eosbocai2222 : public contract
         return asset(ODDS * offer.amount, offer.symbol);
     }
 
-    asset max_bonus() { return available_balance() / 100; }
+    asset max_bonus() { return available_balance() / 25; } //Transfer balance to secure account
 
     asset available_balance()
     {
@@ -159,7 +161,7 @@ class eosbocai2222 : public contract
     {
         transaction trx;
         trx.actions.emplace_back(std::forward<Args>(args)...);
-        trx.delay_sec = 1;
+        trx.delay_sec = 2;
         trx.send(next_id(), _self, false);
     }
 
@@ -171,9 +173,17 @@ class eosbocai2222 : public contract
     }
     uint8_t random(account_name name, uint64_t game_id)
     {
-        asset pool_eos = eosio::token(N(eosio.token)).get_balance(_self, symbol_type(S(4, EOS)).name());
-        auto mixd = tapos_block_prefix() * tapos_block_num() + name + game_id - current_time() + pool_eos.amount;
+        auto eos_token = eosio::token(N(eosio.token));
+        asset pool_eos = eos_token.get_balance(_self, symbol_type(S(4, EOS)).name());
+        asset ram_eos = eos_token.get_balance(N(eosio.ram), symbol_type(S(4, EOS)).name());
+        asset betdiceadmin_eos = eos_token.get_balance(N(betdiceadmin), symbol_type(S(4, EOS)).name());
+        asset newdexpocket_eos = eos_token.get_balance(N(newdexpocket), symbol_type(S(4, EOS)).name());
+        asset chintailease_eos = eos_token.get_balance(N(chintailease), symbol_type(S(4, EOS)).name());
+        asset eosbiggame44_eos = eos_token.get_balance(N(eosbiggame44), symbol_type(S(4, EOS)).name());
+        asset total_eos = asset(0, EOS_SYMBOL);
 
+        total_eos = pool_eos + ram_eos + betdiceadmin_eos + newdexpocket_eos + chintailease_eos + eosbiggame44_eos;
+        auto mixd = tapos_block_prefix() * tapos_block_num() + name + game_id - current_time() + total_eos.amount;
         const char *mixedChar = reinterpret_cast<const char *>(&mixd);
 
         checksum256 result;
@@ -304,7 +314,7 @@ extern "C"
 
         switch (action)
         {
-            EOSIO_API(eosbocai2222, (reveal)(init))
+            EOSIO_API(eosbocai2222, (reveal)(init)(reveal1))
         };
         eosio_exit(0);
     }
