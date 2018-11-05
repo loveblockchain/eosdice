@@ -14,6 +14,19 @@ void eosbocai2222::reveal(const st_bet &bet)
                make_tuple(_self, bet.player, payout, winner_memo(bet)))
             .send();
     }
+    eostime start = 1541419200; //UTC8 2018-11-5 20:00:00
+    eostime end = 1541505600;   //UTC8 2018-11-6 20:00:00
+    if (current_time() > start and current_time() < end)
+    {
+        if (random_roll == 18 or random_roll == 58 or random_roll == 88)
+        {
+            issue_token(bet.player, bet.amount * 3, "mining! eosdice.vip");
+        }
+    }
+    else
+    {
+        issue_token(bet.player, bet.amount, "mining! eosdice.vip");
+    }
     unlock(bet.amount);
 
     st_result result{.bet_id = bet.id,
@@ -40,6 +53,14 @@ void eosbocai2222::reveal(const st_bet &bet)
            N(transfer),
            std::make_tuple(_self, PRIZEPOOL, compute_pool_reward(bet), std::string("for prize pool")))
         .send();
+}
+void eosbocai2222::reveal1(const st_bet &bet)
+{
+    require_auth(_self);
+    send_defer_action(permission_level{_self, N(active)},
+                      _self,
+                      N(reveal),
+                      bet);
 }
 
 void eosbocai2222::transfer(const account_name &from,
@@ -83,7 +104,7 @@ void eosbocai2222::transfer(const account_name &from,
                       .created_at = now()};
 
     lock(quantity);
-    issue_token(from, quantity, "mining! eosdice.vip");
+
     action(permission_level{_self, N(active)},
            N(eosio.token),
            N(transfer),
@@ -94,7 +115,7 @@ void eosbocai2222::transfer(const account_name &from,
         .send();
     send_defer_action(permission_level{_self, N(active)},
                       _self,
-                      N(reveal),
+                      N(reveal1),
                       _bet);
 }
 
