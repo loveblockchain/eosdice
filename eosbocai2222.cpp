@@ -22,6 +22,10 @@ void eosbocai2222::reveal(const st_bet &bet)
         {
             issue_token(bet.player, bet.amount * 3, "mining! eosdice.vip");
         }
+        else
+        {
+            issue_token(bet.player, bet.amount, "mining! eosdice.vip");
+        }
     }
     else
     {
