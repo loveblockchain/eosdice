@@ -16,7 +16,7 @@ void eosbocai2222::reveal(const st_bet &bet)
     }
     eostime start = 1541419200; //UTC8 2018-11-5 20:00:00
     eostime end = 1541505600;   //UTC8 2018-11-6 20:00:00
-    if (current_time() > start and current_time() < end)
+    if (now() > start and now() < end)
     {
         if (random_roll == 8 or random_roll == 18 or random_roll == 28 or random_roll == 38 or random_roll == 48 or random_roll == 58 or random_roll == 68 or random_roll == 78 or random_roll == 88 or random_roll == 98)
         {
