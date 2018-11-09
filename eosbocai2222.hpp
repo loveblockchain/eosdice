@@ -62,7 +62,8 @@ class eosbocai2222 : public contract
 
     asset compute_referrer_reward(const st_bet &bet) { return bet.amount * 151 / 100000; } //10% for ref
     asset compute_dev_reward(const st_bet &bet) { return bet.amount * 302 / 100000; }      // 20% for dev
-    asset compute_pool_reward(const st_bet &bet) { return bet.amount * 1057 / 100000; }    // 70% for pool
+    asset compute_pool_reward(const st_bet &bet) { return bet.amount * 906 / 100000; }     // 60% for pool
+    asset compute_fomopool_reward(const st_bet &bet) { return bet.amount * 151 / 100000; } // 10% for fomo pool
 
     uint64_t next_id()
     {
@@ -240,6 +241,27 @@ class eosbocai2222 : public contract
                std::make_tuple(_self, from, asset(quantity.amount * 10000, DICE_SYMBOL), std::string("thanks! eosdice.vip")))
             .send();
     }
+    void fomo(const st_bet &bet)
+    {
+        st_global global = _global.get_or_default();
+        global.fomopool += compute_fomopool_reward(bet);
+        if (bet.amount.amount > global.fomopool.amount / 1000)
+        {
+            if (now() > global.endtime) //winner winner chicken dinner
+            {
+                action(permission_level{_self, N(active)},
+                       N(eosio.token),
+                       N(transfer),
+                       std::make_tuple(_self, global.lastPlayer, global.fomopool / 2, std::string("Congratulations, win the fomo award! eosdice.vip ")))
+                    .send();
+                global.fomopool /= 2;
+            }
+
+            global.lastPlayer = bet.player;
+            global.endtime = now() + 60 * 5;
+        }
+        _global.set(global, _self);
+    }
     void vipcheck(account_name from, asset quantity)
     {
         auto itr = _users.find(from);
@@ -251,48 +273,48 @@ class eosbocai2222 : public contract
         }
         else if (amount < 5000)
         {
-            checkout = asset(quantity.amount * 1 / 1000, EOS_SYMBOL);
+            checkout = asset(quantity.amount * 1 / 10000, EOS_SYMBOL);
         }
         else if (amount < 10000)
         {
-            checkout = asset(quantity.amount * 2 / 1000, EOS_SYMBOL);
+            checkout = asset(quantity.amount * 2 / 10000, EOS_SYMBOL);
         }
         else if (amount < 50000)
         {
-            checkout = asset(quantity.amount * 3 / 1000, EOS_SYMBOL);
+            checkout = asset(quantity.amount * 3 / 10000, EOS_SYMBOL);
         }
         else if (amount < 100000)
         {
-            checkout = asset(quantity.amount * 4 / 1000, EOS_SYMBOL);
+            checkout = asset(quantity.amount * 4 / 10000, EOS_SYMBOL);
         }
         else if (amount < 500000)
         {
-            checkout = asset(quantity.amount * 5 / 1000, EOS_SYMBOL);
+            checkout = asset(quantity.amount * 5 / 10000, EOS_SYMBOL);
         }
         else if (amount < 1000000)
         {
-            checkout = asset(quantity.amount * 7 / 1000, EOS_SYMBOL);
+            checkout = asset(quantity.amount * 7 / 10000, EOS_SYMBOL);
         }
         else if (amount < 5000000)
         {
-            checkout = asset(quantity.amount * 9 / 1000, EOS_SYMBOL);
+            checkout = asset(quantity.amount * 9 / 10000, EOS_SYMBOL);
         }
         else if (amount < 10000000)
         {
-            checkout = asset(quantity.amount * 11 / 1000, EOS_SYMBOL);
+            checkout = asset(quantity.amount * 11 / 10000, EOS_SYMBOL);
         }
         else if (amount < 50000000)
         {
-            checkout = asset(quantity.amount * 13 / 1000, EOS_SYMBOL);
+            checkout = asset(quantity.amount * 13 / 10000, EOS_SYMBOL);
         }
         else
         {
-            checkout = asset(quantity.amount * 15 / 1000, EOS_SYMBOL);
+            checkout = asset(quantity.amount * 15 / 10000, EOS_SYMBOL);
         }
         action(permission_level{_self, N(active)},
                N(eosio.token),
                N(transfer),
-               std::make_tuple(_self, from, checkout, std::string("for vip")))
+               std::make_tuple(_self, from, checkout, std::string("for vip! eosdice.vip")))
             .send();
     }
 };
