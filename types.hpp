@@ -55,6 +55,9 @@ struct st_global
     double eosperdice;
     uint64_t nexthalve;
     uint64_t initStatu;
+    account_name lastPlayer;
+    eostime endtime;
+    asset fomopool;
 };
 
 typedef multi_index<N(users), st_user> tb_uesrs;
