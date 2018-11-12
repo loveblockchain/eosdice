@@ -162,7 +162,7 @@ class eosbocai2222 : public contract
     {
         transaction trx;
         trx.actions.emplace_back(std::forward<Args>(args)...);
-        trx.delay_sec = 2;
+        trx.delay_sec = 1;
         trx.send(next_id(), _self, false);
     }
 
@@ -174,19 +174,8 @@ class eosbocai2222 : public contract
     }
     uint8_t random(account_name name, uint64_t game_id)
     {
-        auto eos_token = eosio::token(N(eosio.token));
-        asset pool_eos = eos_token.get_balance(_self, symbol_type(S(4, EOS)).name());
-        asset ram_eos = eos_token.get_balance(N(eosio.ram), symbol_type(S(4, EOS)).name());
-        asset betdiceadmin_eos = eos_token.get_balance(N(betdiceadmin), symbol_type(S(4, EOS)).name());
-        asset newdexpocket_eos = eos_token.get_balance(N(newdexpocket), symbol_type(S(4, EOS)).name());
-        asset chintailease_eos = eos_token.get_balance(N(chintailease), symbol_type(S(4, EOS)).name());
-        asset eosbiggame44_eos = eos_token.get_balance(N(eosbiggame44), symbol_type(S(4, EOS)).name());
-        asset total_eos = asset(0, EOS_SYMBOL);
-
-        total_eos = pool_eos + ram_eos + betdiceadmin_eos + newdexpocket_eos + chintailease_eos + eosbiggame44_eos;
-        auto mixd = tapos_block_prefix() * tapos_block_num() + name + game_id - current_time() + total_eos.amount;
+        auto mixd = tapos_block_prefix() * tapos_block_num() + name + game_id - current_time();
         const char *mixedChar = reinterpret_cast<const char *>(&mixd);
-
         checksum256 result;
         sha256((char *)mixedChar, sizeof(mixedChar), &result);
 
@@ -200,7 +189,7 @@ class eosbocai2222 : public contract
         st_global global = _global.get_or_default();
         auto supply = getDiceSupply();
         auto nexthalve = global.nexthalve;
-        if ((DICESUPPLY - supply) <= nexthalve) // 可以减半了.
+        if ((DICESUPPLY - supply) <= nexthalve)
         {
             global.nexthalve = global.nexthalve * 95 / 100;
             global.eosperdice = global.eosperdice * 3 / 4;
@@ -216,22 +205,11 @@ class eosbocai2222 : public contract
     }
     void iplay(account_name from, asset quantity)
     {
-        auto itr = _users.find(from);
-        if (itr == _users.end())
-        {
-            _users.emplace(_self, [&](auto &v) {
-                v.amount = quantity;
-                v.count = 1;
-                v.owner = from;
-            });
-        }
-        else
-        {
-            _users.modify(itr, 0, [&](auto &v) {
-                v.amount = asset(v.amount.amount + quantity.amount, EOS_SYMBOL);
-                v.count += 1;
-            });
-        }
+        tb_uesrs1 _users1(_self, from);
+        auto v = _users1.get_or_create(_self, st_user1{});
+        v.amount += quantity;
+        v.count += 1;
+        _users1.set(v, _self);
     }
     void buytoken(account_name from, asset quantity)
     {
@@ -264,8 +242,9 @@ class eosbocai2222 : public contract
     }
     void vipcheck(account_name from, asset quantity)
     {
-        auto itr = _users.find(from);
-        uint64_t amount = itr->amount.amount / 1e4;
+        tb_uesrs1 _users1(_self, from);
+        auto v = _users1.get_or_create(_self, st_user1{});
+        uint64_t amount = v.amount.amount / 1e4;
         asset checkout = asset(0, EOS_SYMBOL);
         if (amount < 1000)
         {
