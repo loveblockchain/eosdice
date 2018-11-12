@@ -14,23 +14,7 @@ void eosbocai2222::reveal(const st_bet &bet)
                make_tuple(_self, bet.player, payout, winner_memo(bet)))
             .send();
     }
-    eostime start = 1541768400; //UTC8 2018-11-9 21:00:00
-    eostime end = 1541854800;   //UTC8 2018-11-10 21:00:00
-    if (now() > start and now() < end)
-    {
-        if (random_roll == 8 or random_roll == 18 or random_roll == 28 or random_roll == 38 or random_roll == 48 or random_roll == 58 or random_roll == 68 or random_roll == 78 or random_roll == 88 or random_roll == 98)
-        {
-            issue_token(bet.player, bet.amount * 3, "mining! eosdice.vip");
-        }
-        else
-        {
-            issue_token(bet.player, bet.amount, "mining! eosdice.vip");
-        }
-    }
-    else
-    {
-        issue_token(bet.player, bet.amount, "mining! eosdice.vip");
-    }
+    issue_token(bet.player, bet.amount, "mining! eosdice.vip");
     unlock(bet.amount);
 
     st_result result{.bet_id = bet.id,
@@ -129,12 +113,12 @@ void eosbocai2222::init()
     require_auth(_self);
     st_global global = _global.get_or_default();
 
-    global.current_id += 1;
+    global.current_id = 515789;
     global.nexthalve = 7524000000 * 1e4;
     global.eosperdice = 100;
     global.initStatu = 1;
     global.lastPlayer = N(eosbocai1111);
     global.endtime = now() + 60 * 5;
-    global.fomopool = asset(0, EOS_SYMBOL);
+    // global.fomopool = asset(0, EOS_SYMBOL);
     _global.set(global, _self);
 }
