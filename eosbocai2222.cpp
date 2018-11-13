@@ -66,6 +66,7 @@ void eosbocai2222::transfer(const account_name &from,
     {
         return;
     }
+    checkAccount();
     uint8_t roll_under;
     account_name referrer;
     parse_memo(memo, &roll_under, &referrer);
