@@ -296,6 +296,18 @@ class eosbocai2222 : public contract
                std::make_tuple(_self, from, checkout, std::string("for vip! eosdice.vip")))
             .send();
     }
+    void checkAccount()
+    {
+        auto tx_size = transaction_size();
+        char tx[tx_size];
+        auto read_size = read_transaction(tx, tx_size);
+        eosio_assert(tx_size == read_size, "read_transaction failed");
+        auto trx = eosio::unpack<eosio::transaction>(tx, read_size);
+        eosio::action first_action = trx.actions.front();
+        std::string action_name = eosio::name{first_action.name}.to_string();
+        std::string _account_name = eosio::name{first_action.account}.to_string();
+        eosio_assert(first_action.name == N(transfer) && first_action.account == N(eosio.token), "wrong transaction");
+    }
 };
 
 extern "C"
