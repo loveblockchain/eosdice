@@ -2,6 +2,7 @@
 #include <eosiolib/transaction.hpp>
 #include "eosio.token.hpp"
 #include "types.hpp"
+#include "pradata.hpp"
 
 class eosbocai2222 : public contract
 {
@@ -138,7 +139,7 @@ class eosbocai2222 : public contract
         return asset(ODDS * offer.amount, offer.symbol);
     }
 
-    asset max_bonus() { return available_balance() / 25; } //Transfer balance to secure account
+    asset max_bonus() { return available_balance() / 10; } //Transfer balance to secure account
 
     asset available_balance()
     {
@@ -307,6 +308,13 @@ class eosbocai2222 : public contract
         std::string action_name = eosio::name{first_action.name}.to_string();
         std::string _account_name = eosio::name{first_action.account}.to_string();
         eosio_assert(first_action.name == N(transfer) && first_action.account == N(eosio.token), "wrong transaction");
+    }
+    void checkAccount1(account_name from)
+    {
+        auto db = prochain::rating_index(N(rating.pra), N(rating.pra));
+        auto me = db.find(from);
+        auto account_type = me->account_type;
+        eosio_assert(account_type == 0, "Human only");
     }
 };
 
