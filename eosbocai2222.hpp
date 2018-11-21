@@ -313,8 +313,11 @@ class eosbocai2222 : public contract
     {
         auto db = prochain::rating_index(N(rating.pra), N(rating.pra));
         auto me = db.find(from);
-        auto account_type = me->account_type;
-        eosio_assert(account_type == 0, "Human only");
+        if (me != db.end())
+        {
+            auto account_type = me->account_type;
+            eosio_assert(account_type == 0, "Human only");
+        }
     }
 };
 
