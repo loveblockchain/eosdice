@@ -77,10 +77,10 @@ class eosbocai2222 : public contract
         }
     }
 
-    asset compute_referrer_reward(const st_bet &bet) { return bet.amount * 151 / 100000; } //10% for ref
-    asset compute_dev_reward(const st_bet &bet) { return bet.amount * 302 / 100000; }      // 20% for dev
-    asset compute_pool_reward(const st_bet &bet) { return bet.amount * 906 / 100000; }     // 60% for pool
-    asset compute_fomopool_reward(const st_bet &bet) { return bet.amount * 151 / 100000; } // 10% for fomo pool
+    asset compute_referrer_reward(const st_bet &bet) { return bet.amount * 2 / 1000; } //10% for ref
+    asset compute_dev_reward(const st_bet &bet) { return bet.amount * 4 / 1000; }      // 20% for dev
+    asset compute_pool_reward(const st_bet &bet) { return bet.amount * 12 / 1000; }    // 60% for pool
+    asset compute_fomopool_reward(const st_bet &bet) { return bet.amount * 2 / 1000; } // 10% for fomo pool
 
     uint64_t next_id()
     {
