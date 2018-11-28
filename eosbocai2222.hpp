@@ -12,9 +12,19 @@ class eosbocai2222 : public contract
           _bets(_self, _self),
           _users(_self, _self),
           _fund_pool(_self, _self),
+          _tokens(_self, _self),
           _global(_self, _self){};
 
-    void transfer(const account_name &from, const account_name &to, const asset &quantity, const string &memo);
+    // @abi action
+    void transfer(account_name from,
+                  account_name to,
+                  asset quantity,
+                  string memo);
+
+    void onTransfer(account_name from,
+                    account_name to,
+                    extended_asset quantity,
+                    string memo);
 
     // @abi action
     void reveal(const st_bet &bet);
@@ -22,13 +32,19 @@ class eosbocai2222 : public contract
     void reveal1(const st_bet &bet);
 
     // @abi action
+    void addtoken(account_name contract, asset quantity);
+
+    // @abi action
     void init();
+
+    void apply(account_name code, action_name action);
 
   private:
     tb_bets _bets;
     tb_uesrs _users;
     tb_fund_pool _fund_pool;
     tb_global _global;
+    tb_tokens _tokens;
 
     void parse_memo(string memo,
                     uint8_t *roll_under,
@@ -98,19 +114,28 @@ class eosbocai2222 : public contract
         return memo;
     }
 
-    void assert_quantity(const asset &quantity)
+    void assert_quantity(const extended_asset &quantity)
     {
-        eosio_assert(quantity.symbol == EOS_SYMBOL, "only EOS token allowed");
+        auto itr = _tokens.find(quantity.contract + quantity.symbol);
+        eosio_assert(itr != _tokens.end(), "Non-existent token");
         eosio_assert(quantity.is_valid(), "quantity invalid");
-        eosio_assert(quantity.amount >= 5000, "transfer quantity must be greater than 0.5");
+        eosio_assert(quantity.amount >= itr->minAmout, "transfer quantity must be greater than minimum");
+    }
+    bool iseostoken(const extended_asset &quantity)
+    {
+        if ((quantity.contract == N(eosio.token)) && (quantity.symbol == EOS_SYMBOL))
+        {
+            return true;
+        }
+        return false;
     }
 
-    void assert_roll_under(const uint8_t &roll_under, const asset &quantity)
+    void assert_roll_under(const uint8_t &roll_under, const extended_asset &quantity)
     {
         eosio_assert(roll_under >= 2 && roll_under <= 96,
                      "roll under overflow, must be greater than 2 and less than 96");
         eosio_assert(
-            max_payout(roll_under, quantity) <= max_bonus(),
+            max_payout(roll_under, quantity) <= max_bonus(quantity),
             "offered overflow, expected earning is greater than the maximum bonus");
     }
 
@@ -129,25 +154,33 @@ class eosbocai2222 : public contract
         _fund_pool.set(pool, _self);
     }
 
-    asset compute_payout(const uint8_t &roll_under, const asset &offer)
+    asset compute_payout(const uint8_t &roll_under, const extended_asset &offer)
     {
-        return min(max_payout(roll_under, offer), max_bonus());
+        return min(max_payout(roll_under, offer), max_bonus(offer));
     }
     asset max_payout(const uint8_t &roll_under, const asset &offer)
     {
-        const double ODDS = 98.5 / ((double)roll_under - 1.0);
+        const double ODDS = 98 / ((double)roll_under - 1.0);
         return asset(ODDS * offer.amount, offer.symbol);
     }
 
-    asset max_bonus() { return available_balance() / 10; } //Transfer balance to secure account
+    asset max_bonus(const extended_asset &quantity) { return available_balance(quantity) / 10; } //Transfer balance to secure account
 
-    asset available_balance()
+    asset available_balance(const extended_asset &quantity)
     {
-        auto token = eosio::token(N(eosio.token));
+        auto token = eosio::token(quantity.contract);
         const asset balance =
-            token.get_balance(_self, symbol_type(EOS_SYMBOL).name());
-        const asset locked = get_fund_pool().locked;
-        const asset available = balance - locked;
+            token.get_balance(_self, symbol_type(quantity.symbol).name());
+        asset available;
+        if (iseostoken(quantity))
+        {
+            const asset locked = get_fund_pool().locked;
+            available = balance - locked;
+        }
+        else
+        {
+            available = balance;
+        }
         eosio_assert(available.amount >= 0, "fund pool overdraw");
         return available;
     }
@@ -212,14 +245,6 @@ class eosbocai2222 : public contract
         v.count += 1;
         _users1.set(v, _self);
     }
-    void buytoken(account_name from, asset quantity)
-    {
-        action(permission_level{_self, N(active)},
-               DICETOKEN,
-               N(transfer),
-               std::make_tuple(_self, from, asset(quantity.amount * 10000, DICE_SYMBOL), std::string("thanks! eosdice.vip")))
-            .send();
-    }
     void fomo(const st_bet &bet)
     {
         st_global global = _global.get_or_default();
@@ -237,7 +262,7 @@ class eosbocai2222 : public contract
             }
 
             global.lastPlayer = bet.player;
-            global.endtime = now() + 60 * 5;
+            global.endtime = now() + 60 * 60;
         }
         _global.set(global, _self);
     }
@@ -297,18 +322,6 @@ class eosbocai2222 : public contract
                std::make_tuple(_self, from, checkout, std::string("for vip! eosdice.vip")))
             .send();
     }
-    void checkAccount()
-    {
-        auto tx_size = transaction_size();
-        char tx[tx_size];
-        auto read_size = read_transaction(tx, tx_size);
-        eosio_assert(tx_size == read_size, "read_transaction failed");
-        auto trx = eosio::unpack<eosio::transaction>(tx, read_size);
-        eosio::action first_action = trx.actions.front();
-        std::string action_name = eosio::name{first_action.name}.to_string();
-        std::string _account_name = eosio::name{first_action.account}.to_string();
-        eosio_assert(first_action.name == N(transfer) && first_action.account == N(eosio.token), "wrong transaction");
-    }
     void checkAccount1(account_name from)
     {
         auto db = prochain::rating_index(N(rating.pra), N(rating.pra));
@@ -320,26 +333,38 @@ class eosbocai2222 : public contract
         }
     }
 };
+struct st_transfer
+{
+    account_name from;
+    account_name to;
+    asset quantity;
+    string memo;
+};
+
+void eosbocai2222::apply(account_name code, action_name action)
+{
+    auto &thiscontract = *this;
+
+    if (action == N(transfer))
+    {
+        auto transfer_data = unpack_action_data<st_transfer>();
+        onTransfer(transfer_data.from, transfer_data.to, extended_asset(transfer_data.quantity, code), transfer_data.memo);
+        return;
+    }
+
+    if (code != _self)
+        return;
+    switch (action)
+    {
+        EOSIO_API(eosbocai2222, (reveal)(init)(reveal1)(addtoken));
+    };
+}
 
 extern "C"
 {
-    void apply(uint64_t receiver, uint64_t code, uint64_t action)
-    {
-        eosbocai2222 thiscontract(receiver);
-
-        if ((code == N(eosio.token)) && (action == N(transfer)))
-        {
-            execute_action(&thiscontract, &eosbocai2222::transfer);
-            return;
-        }
-
-        if (code != receiver)
-            return;
-
-        switch (action)
-        {
-            EOSIO_API(eosbocai2222, (reveal)(init)(reveal1))
-        };
+    [[noreturn]] void apply(uint64_t receiver, uint64_t code, uint64_t action) {
+        eosbocai2222 p(receiver);
+        p.apply(code, action);
         eosio_exit(0);
     }
 }
