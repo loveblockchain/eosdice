@@ -4,18 +4,21 @@ void eosbocai2222::reveal(const st_bet &bet)
 {
     require_auth(_self);
     uint8_t random_roll = random(bet.player, bet.id);
-    asset payout = asset(0, EOS_SYMBOL);
+    asset payout = asset(0, bet.amount.symbol);
     if (random_roll < bet.roll_under)
     {
         payout = compute_payout(bet.roll_under, bet.amount);
         action(permission_level{_self, N(active)},
-               N(eosio.token),
+               bet.amount.contract,
                N(transfer),
                make_tuple(_self, bet.player, payout, winner_memo(bet)))
             .send();
     }
-    issue_token(bet.player, bet.amount, "mining! eosdice.vip");
-    unlock(bet.amount);
+    if (iseostoken(bet.amount))
+    {
+        issue_token(bet.player, bet.amount, "mining! eosdice.vip");
+        unlock(bet.amount);
+    }
 
     st_result result{.bet_id = bet.id,
                      .player = bet.player,
@@ -31,12 +34,12 @@ void eosbocai2222::reveal(const st_bet &bet)
            result)
         .send();
     action(permission_level{_self, N(active)},
-           N(eosio.token),
+           bet.amount.contract,
            N(transfer),
            std::make_tuple(_self, DEV, compute_dev_reward(bet), std::string("for dev")))
         .send();
     action(permission_level{_self, N(active)},
-           N(eosio.token),
+           bet.amount.contract,
            N(transfer),
            make_tuple(_self,
                       bet.referrer,
@@ -53,10 +56,10 @@ void eosbocai2222::reveal1(const st_bet &bet)
                       bet);
 }
 
-void eosbocai2222::transfer(const account_name &from,
-                            const account_name &to,
-                            const asset &quantity,
-                            const string &memo)
+void eosbocai2222::onTransfer(account_name from,
+                              account_name to,
+                              extended_asset quantity,
+                              string memo)
 {
     if (from == _self || to != _self)
     {
@@ -66,27 +69,18 @@ void eosbocai2222::transfer(const account_name &from,
     {
         return;
     }
-    checkAccount();
     checkAccount1(from);
     uint8_t roll_under;
     account_name referrer;
     parse_memo(memo, &roll_under, &referrer);
     eosio_assert(is_account(referrer), "referrer account does not exist");
-
-    // //check quantity
-    assert_quantity(quantity);
-
-    // //check roll_under
-    assert_roll_under(roll_under, quantity);
-
     // //check referrer
     eosio_assert(referrer != from, "referrer can not be self");
 
-    //count player
-    iplay(from, quantity);
-
-    //vip check
-    vipcheck(from, quantity);
+    // //check roll_under
+    assert_roll_under(roll_under, quantity);
+    // //check quantity
+    assert_quantity(quantity);
 
     const st_bet _bet{.id = next_id(),
                       .player = from,
@@ -95,21 +89,37 @@ void eosbocai2222::transfer(const account_name &from,
                       .roll_under = roll_under,
                       .created_at = now()};
 
-    lock(quantity);
+    if (iseostoken(quantity))
+    {
+        //count player
+        iplay(from, quantity);
 
-    fomo(_bet);
+        //vip check
+        vipcheck(from, quantity);
+
+        lock(quantity);
+        fomo(_bet);
+    }
 
     action(permission_level{_self, N(active)},
-           N(eosio.token),
+           _bet.amount.contract,
            N(transfer),
-           std::make_tuple(_self, N(eosbocaidivi), compute_pool_reward(_bet), std::string("make_profit")))
+           std::make_tuple(_self, N(eosbocai1111), compute_pool_reward(_bet), std::string("Dividing pool")))
         .send();
     send_defer_action(permission_level{_self, N(active)},
                       _self,
                       N(reveal1),
                       _bet);
 }
-
+void eosbocai2222::addtoken(account_name contract, asset quantity)
+{
+    require_auth(_self);
+    _tokens.emplace(_self, [&](auto &r) {
+        r.contract = contract;
+        r.symbol = quantity.symbol;
+        r.minAmout = quantity.amount;
+    });
+}
 void eosbocai2222::init()
 {
     require_auth(_self);
@@ -121,6 +131,6 @@ void eosbocai2222::init()
     global.initStatu = 1;
     global.lastPlayer = N(eosbocai1111);
     global.endtime = now() + 60 * 5;
-    // global.fomopool = asset(0, EOS_SYMBOL);
+    global.fomopool = asset(0, EOS_SYMBOL);
     _global.set(global, _self);
 }
