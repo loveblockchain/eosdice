@@ -27,9 +27,9 @@ class eosbocai2222 : public contract
                     string memo);
 
     // @abi action
-    void reveal(const st_bet &bet);
+    void reveal(const uint64_t &id);
     // @abi action
-    void reveal1(const st_bet &bet);
+    void reveal1(const uint64_t &id);
 
     // @abi action
     void addtoken(account_name contract, asset quantity);
@@ -265,6 +265,24 @@ class eosbocai2222 : public contract
             global.endtime = now() + 60 * 60;
         }
         _global.set(global, _self);
+    }
+    void save(const st_bet &bet)
+    {
+        _bets.emplace(_self, [&](st_bet &r) {
+            r.id = bet.id;
+            r.player = bet.player;
+            r.referrer = bet.referrer;
+            r.amount = bet.amount;
+            r.roll_under = bet.roll_under;
+            r.created_at = bet.created_at;
+        });
+    }
+    void remove(const uint64_t bet_id) { _bets.erase(_bets.find(bet_id)); }
+    st_bet find_or_error(const uint64_t &id)
+    {
+        auto itr = _bets.find(id);
+        eosio_assert(itr != _bets.end(), "bet not found");
+        return *itr;
     }
     void vipcheck(account_name from, asset quantity)
     {
