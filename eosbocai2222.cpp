@@ -1,8 +1,9 @@
 #include "eosbocai2222.hpp"
 
-void eosbocai2222::reveal(const st_bet &bet)
+void eosbocai2222::reveal(const uint64_t &id)
 {
     require_auth(_self);
+    st_bet bet = find_or_error(id);
     uint8_t random_roll = random(bet.player, bet.id);
     asset payout = asset(0, bet.amount.symbol);
     if (random_roll < bet.roll_under)
@@ -46,14 +47,15 @@ void eosbocai2222::reveal(const st_bet &bet)
                       compute_referrer_reward(bet),
                       referrer_memo(bet)))
         .send();
+    remove(bet.id);
 }
-void eosbocai2222::reveal1(const st_bet &bet)
+void eosbocai2222::reveal1(const uint64_t &id)
 {
     require_auth(_self);
     send_defer_action(permission_level{_self, N(active)},
                       _self,
                       N(reveal),
-                      bet);
+                      id);
 }
 
 void eosbocai2222::onTransfer(account_name from,
@@ -88,7 +90,7 @@ void eosbocai2222::onTransfer(account_name from,
                       .amount = quantity,
                       .roll_under = roll_under,
                       .created_at = now()};
-
+    save(_bet);
     if (iseostoken(quantity))
     {
         //count player
@@ -109,7 +111,7 @@ void eosbocai2222::onTransfer(account_name from,
     send_defer_action(permission_level{_self, N(active)},
                       _self,
                       N(reveal1),
-                      _bet);
+                      _bet.id);
 }
 void eosbocai2222::addtoken(account_name contract, asset quantity)
 {
